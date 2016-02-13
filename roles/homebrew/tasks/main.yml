@@ -1,0 +1,25 @@
+---
+- name: Check if homebrew is installed
+  stat: "path={{ homebrew_executable }}"
+  register: homebrew_installed
+
+- name: Install homebrew
+  raw: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+  when: homebrew_installed.stat.exists == false
+
+- name: Update homebrew
+  homebrew:
+    update_homebrew: True
+    upgrade_all: True
+
+- name: Install homewbrew taps
+  homebrew_tap: "tap={{ item }} state=present"
+  with_items: homebrew_taps
+
+- name: Install homebrew casks
+  homebrew_cask: name={{ item }} state=present
+  with_items: homebrew_cask_applications
+
+- name: Install homebrew applications
+  homebrew: name={{ item }} state=present
+  with_items: homebrew_applications

@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+import subprocess; 
+import tempfile; 
+import os, sys; 
+
+class bcolors: 
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def cprint(msg, color=bcolors.OKBLUE):
+    print color + msg + bcolors.ENDC
+
+def shell(command):
+    subprocess.call(command, shell=True)
+
+def prompt_for_sudo():
+    shell("sudo -k")
+    shell("sudo -p 'Please enter your password: ' true")
+
+def passwordless_sudo():
+    cprint("Enabling passwordless sudo for the admin user...")
+
+    dest_file = '/private/etc/sudoers.d/01_admin_passwordless_sudo' 
+    if(not os.path.isfile(dest_file)):
+        sudoers = '/etc/sudoers'
+        with tempfile.NamedTemporaryFile() as f:
+            f.write("%admin ALL=(ALL) NOPASSWD: ALL")
+            f.seek(0)
+            if(shell("sudo visudo -cf {f.name}".format(**locals())) != 0):
+                cprint("Could not validate sudoers file for passwordless sudo", bcolor.FAIL)
+            else:
+                shell("sudo mkdir -p /private/etc/sudoers.d")
+                shell("sudo cp {f.name} {dest_file}".format(**locals()))
+        cprint("Passwordless sudo enabled.")
+    else:
+        cprint("Passwordless sudo already enabled.")
+
+def install_command_line_tools():
+    cprint("Installing OS X Command Line Tools")
+    if(subprocess.call("pkgutil --pkgs=com.apple.pkg.CLTools_Executables", shell=True) != 0):
+        shell('''
+            touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+            PROD=$(softwareupdate -l | sed -nE 's/.*\\* (Command Line Tools .*)$/\\1/p')
+            sudo softwareupdate -i "${PROD}" -v
+        ''')
+    else:
+        cprint("Command Line Tools are already installed")
+    
+def install_ansible():
+    cprint("Installing pip...")
+    shell("sudo easy_install pip")
+    cprint("Installing ansible...") 
+    shell("sudo -H pip install ansible")
+    shell("ansible-galaxy install -r requirements.yml --roles-path=./roles")
+    cprint("Ansible ready to go!")
+
+cprint("Bootstrapping this thing...")
+prompt_for_sudo()
+passwordless_sudo()
+install_command_line_tools()
+install_ansible()

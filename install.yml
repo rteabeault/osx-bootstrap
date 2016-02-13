@@ -1,0 +1,54 @@
+---
+- hosts: all
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: Set the shell to /bin/zsh
+      become: yes
+      user: 
+        name: "{{ ansible_user_id }}"
+        shell: /bin/zsh
+        generate_ssh_key: yes 
+        ssh_key_bits: 2048 
+        ssh_key_file: .ssh/id_rsa
+
+    - name: Install oh-my-zsh
+      git:
+        repo: https://github.com/robbyrussell/oh-my-zsh
+        dest: ~/.oh-my-zsh
+
+    - name: Install oh-my-zsh-custom
+      git:
+        repo: https://github.com/RallySoftware/oh-my-zsh-custom
+        dest: ~/.oh-my-zsh-custom 
+
+    - name: Copy over .zshrc
+      copy:
+        src: ~/.oh-my-zsh-custom/templates/zshrc.zsh-template
+        dest: ~/.zshrc
+        force: no
+
+    - name: Install spacemacs
+      git: 
+        repo: https://github.com/syl20bnr/spacemacs 
+        dest: ~/.emacs.d
+      
+    - name: Grab the dotfiles repo
+      git: 
+        repo: https://github.com/RallySoftware/dotfiles
+        dest: ~/projects/dotfiles
+
+    - name: Link spacemacs 
+      file: 
+        src: ~/projects/dotfiles/emacs/paas-spacemacs 
+        dest: ~/.spacemacs 
+        state: link
+
+    - name: Link tmux 
+      file: 
+        src: ~/projects/dotfiles/tmux/paas-tmux.conf 
+        dest: ~/.tmux.conf 
+        state: link
+
+  roles:
+    - homebrew

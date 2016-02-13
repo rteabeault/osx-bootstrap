@@ -1,0 +1,14 @@
+---
+homebrew_taps:
+  - railwaycat/homebrew-emacsmacport
+
+homebrew_cask_applications:
+  - google-chrome
+  - iterm2
+  - dropbox
+  - lastpass
+  - calibre
+
+homebrew_applications:
+  - tmux
+  - emacs-mac
